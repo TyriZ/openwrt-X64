@@ -1,0 +1,261 @@
+#=================================================
+# Description: Build OpenWrt using GitHub Actions
+# Lisence: MIT
+# Author: P3TERX
+# Blog: https://p3terx.com
+# 自定义配置
+# CONFIG_PACKAGE_coremark is not set
+# CONFIG_DEFAULT_coremark is not set
+# CONFIG_PACKAGE_luci-app-zerotier is not set
+# CONFIG_PACKAGE_luci-app-v2ray-server is not set
+# git clone https://github.com/brvphoenix/wrtbwmon openwrt/package/wrtbwmon
+# git clone https://github.com/brvphoenix/luci-app-wrtbwmon openwrt/package/luci-app-wrtbwmon
+#         CONFIG_KERNEL_BUILD_USER="Tyri"
+#         CONFIG_GRUB_TIMEOUT="0"
+ #        CONFIG_GRUB_TITLE="OpenWrt AutoBuild By Tyri"
+#=================================================
+
+name: 编译OpenWrt-X86
+
+on: 
+  #push:
+    #branches: 
+      #- master
+   schedule:
+     - cron: 30 10 * * 5
+   watch:
+     types: [started]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 校验本地文件
+      uses: actions/checkout@master
+
+    - name: 安装编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        docker rmi `docker images -q`
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
+        sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*
+        sudo -E apt-get update
+        sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler
+        sudo -E apt-get -y autoremove --purge
+        sudo -E apt-get clean
+        
+    - name: git源码
+      env: 
+        REPO_URL: https://github.com/coolsnowwolf/lede
+        REPO_BRANCH: master
+      run: git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+
+
+
+    - name: 更新 feeds
+      run: cd openwrt && ./scripts/feeds update -a
+      
+
+    - name: 安装 feeds
+      run: cd openwrt && ./scripts/feeds install -a
+
+    #- name: SSH connection to Actions
+      #uses: P3TERX/debugger-action@master
+      #if: env.SSH_ACTIONS == 'true'
+      
+    - name: 自定义插件
+      run: |
+        rm -rf openwrt/package/lean/luci-theme-argon
+        git clone https://github.com/Leo-Jo/luci-app-koolproxyR openwrt/package/luci-app-koolproxyR
+        git clone https://github.com/Mrbai98/luci-theme-atmaterial openwrt/package/luci-theme-atmaterial
+        git clone https://github.com/tty228/luci-app-serverchan openwrt/package/luci-app-serverchan
+        svn co https://github.com/jsda/packages2/trunk/ntlf9t/luci-app-advancedsetting openwrt/package/luci-app-advancedsetting
+      #git clone https://github.com/pymumu/luci-app-smartdns openwrt/package/luci-app-smartdns
+      #svn co https://github.com/pymumu/smartdns/trunk/package/openwrt openwrt/package/smartdns
+      #sed -i '24d' openwrt/package/luci-app-smartdns/Makefile
+      #sed -i '23a include $(TOPDIR)/feeds/luci/luci.mk' openwrt/package/luci-app-smartdns/Makefile
+      #sed -i 's/+luci-compat +smartdns/+smartdns/g' openwrt/package/luci-app-smartdns/Makefile
+      # rm -rf lede/package/lean/luci-app-smartdns
+      # rm -rf lede/package/lean/luci-theme-argon
+      # cp -r openwrt/package/luci-app-smartdns lede/package/lean/
+      # cp -r openwrt/package/luci-theme-argon lede/package/lean/
+      # cp -r /home/runner/work/lede/lede/openwrt/package/luci-app-wrtbwmon /home/runner/work/lede/lede/package/lean/
+      # git clone https://github.com/vernesong/OpenClash openwrt/package/tmp
+      # git clone https://github.com/jerrykuku/luci-theme-argon openwrt/package/luci-theme-argon
+        
+    #- name: SSH connection to Actions
+      #uses: P3TERX/debugger-action@master
+    #  if: env.SSH_ACTIONS == 'true'
+
+    - name: 导入自定义配置
+      run: |
+        [ -e files ] && mv files openwrt/files
+        cd openwrt
+        rm -f ./.config*
+        touch ./.config
+
+        # 编译固件配置:
+        cat >> .config <<EOF
+        CONFIG_TARGET_x86=y
+        CONFIG_TARGET_x86_64=y
+        CONFIG_TARGET_x86_64_Generic=y
+        CONFIG_TARGET_KERNEL_PARTSIZE=16
+        CONFIG_TARGET_ROOTFS_PARTSIZE=160
+        CONFIG_KERNEL_BUILD_USER="Tyri"
+        CONFIG_GRUB_TIMEOUT="0"
+        CONFIG_GRUB_TITLE="OpenWrt AutoBuild By Tyri"
+        EOF
+        
+
+        # 编译固件配置:
+        # cat >> .config <<EOF
+        # CONFIG_EFI_IMAGES is not set
+        # CONFIG_VDI_IMAGES is not set
+        # CONFIG_VMDK_IMAGES is not set
+        # CONFIG_VHD_IMAGES is not set
+        # CONFIG_QCOW2_IMAGES is not set
+        # CONFIG_TARGET_IMAGES_PAD is not set
+        # CONFIG_TARGET_IMAGES_GZIP is not set
+        # EOF
+        
+        # IPv6支持:
+        cat >> .config <<EOF
+        # CONFIG_IPV6 is not set
+        # CONFIG_PACKAGE_dnsmasq_full_dhcpv6 is not set
+        # CONFIG_PACKAGE_ipv6helper is not set
+        CONFIG_PACKAGE_dnsmasq-full=y
+        CONFIG_PACKAGE_dnsmasq_full_dhcp=y
+        CONFIG_PACKAGE_dnsmasq_full_ipset=y
+        EOF
+        
+        # USB3.0支持:
+        cat >> .config <<EOF
+        CONFIG_PACKAGE_kmod-usb-ohci=y
+        CONFIG_PACKAGE_kmod-usb-ohci-pci=y
+        CONFIG_PACKAGE_kmod-usb2=y
+        CONFIG_PACKAGE_kmod-usb2-pci=y
+        CONFIG_PACKAGE_kmod-usb3=y
+        EOF
+        
+        # 多文件系统支持:
+        cat >> .config <<EOF
+        CONFIG_PACKAGE_kmod-fs-nfs=y
+        CONFIG_PACKAGE_kmod-fs-nfs-common=y
+        CONFIG_PACKAGE_kmod-fs-nfs-v3=y
+        CONFIG_PACKAGE_kmod-fs-nfs-v4=y
+        CONFIG_PACKAGE_kmod-fs-ntfs=y
+        CONFIG_PACKAGE_kmod-fs-squashfs=y
+        EOF
+        
+        # LuCI插件选择:
+        cat >> .config <<EOF
+        CONFIG_PACKAGE_luci-app-adbyby-plus=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Server=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Socks=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Trojan=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray=y
+        CONFIG_PACKAGE_luci-app-unblockmusic=y
+        CONFIG_PACKAGE_luci-app-mwan3helper=y
+        CONFIG_PACKAGE_luci-app-flowoffload=y
+        CONFIG_PACKAGE_luci-app-syncdial=y
+        CONFIG_PACKAGE_luci-app-ttyd=y
+        CONFIG_PACKAGE_luci-app-wrtbwmon=y
+        CONFIG_PACKAGE_luci-app-koolproxyR=y
+        CONFIG_PACKAGE_luci-app-webadmin=y
+        CONFIG_PACKAGE_luci-app-zerotier=y
+        CONFIG_PACKAGE_luci-app-wol=y
+        CONFIG_PACKAGE_luci-app-serverchan=y
+        CONFIG_PACKAGE_luci-app-advancedsetting=y
+        EOF
+        
+        # LuCI主题:
+        cat >> .config <<EOF
+        CONFIG_PACKAGE_luci-theme-atmaterial=y
+        CONFIG_PACKAGE_luci-theme-netgear=y 
+        EOF
+        
+        # 常用软件包:
+        cat >> .config <<EOF
+        CONFIG_PACKAGE_curl=y
+        CONFIG_PACKAGE_htop=y
+        CONFIG_PACKAGE_nano=y
+        CONFIG_PACKAGE_screen=y
+        CONFIG_PACKAGE_tree=y
+        CONFIG_PACKAGE_vim-fuller=y
+        CONFIG_PACKAGE_wget=y
+        CONFIG_PACKAGE_iperf=y
+        CONFIG_PACKAGE_iperf3=y
+        CONFIG_PACKAGE_tcping=y
+        CONFIG_PACKAGE_bind-dig=y
+        CONFIG_PACKAGE_pdnsd-alt=y
+        CONFIG_PACKAGE_fdisk=y
+        CONFIG_PACKAGE_cfdisk=y
+        CONFIG_PACKAGE_lsblk=y
+        CONFIG_PACKAGE_lrzsz=y
+        CONFIG_PACKAGE_unzip=y
+        CONFIG_PACKAGE_zip=y
+        EOF
+        
+        # 取消编译VMware镜像以及镜像填充 (不要删除被缩进的注释符号)
+        cat >> .config <<EOF
+        # CONFIG_VMDK_IMAGES is not set
+        # CONFIG_PACKAGE_luci-app-docker is not set
+        # CONFIG_PACKAGE_luci-app-wifischedule is not set
+        # CONFIG_PACKAGE_luci-app-vsftpd is not set
+        # CONFIG_PACKAGE_luci-app-usb-printer is not set
+        # CONFIG_PACKAGE_luci-app-transmission is not set
+        # CONFIG_PACKAGE_luci-app-xlnetacc is not set
+        # CONFIG_PACKAGE_luci-app-sqm is not set
+        # CONFIG_PACKAGE_luci-app-openvpn is not set
+        # CONFIG_PACKAGE_luci-app-openvpn-server is not set
+        # CONFIG_PACKAGE_luci-app-qbittorrent is not set
+        # CONFIG_PACKAGE_luci-app-ipsec-vpnd is not set
+        # CONFIG_PACKAGE_luci-app-pptp-server is not set
+        # CONFIG_PACKAGE_luci-app-unblockneteasemusic-mini is not set
+        EOF
+        
+        sed -i 's/^[ \t]*//g' ./.config
+        echo '修改网关地址'
+        sed -i 's/192.168.1.1/192.168.1.233/g' package/base-files/files/bin/config_generate
+        
+        make defconfig
+
+    - name: 下载编译所需源码
+      run: |
+        cd openwrt && make download -j8
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: 编译
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread build."
+        make -j$(nproc) V=s
+
+    - name: 清理不必要的文件
+      run: |
+        cd openwrt
+        rm -rf ./artifact/
+        mkdir -p ./artifact/
+        find ./bin/targets/ -name "*combined*img*" | xargs -i mv -f {} ./artifact/
+        find ./bin/targets/ -name "*sysupgrade*bin*" | xargs -i mv -f {} ./artifact/
+        mv .config ./artifact/
+        mkdir -p ./ipk/
+        find ./bin/packages/ -name "*.ipk" | xargs -i mv -f {} ./ipk/
+        echo "::set-env name=FILENAME::$(echo "OpenWrt-x86-`date -d "+8 hour" +%Y%m%d-%H%M%S`")"
+        
+    - name: 上传IMG固件
+      uses: actions/upload-artifact@master
+      with:
+        name: ${{ env.FILENAME }}
+        path: ./openwrt/artifact/
+        
+    - name: 上传IPK包
+      uses: actions/upload-artifact@master
+      with:
+        name: OpenWrt_IPK
+        path: ./openwrt/ipk/
