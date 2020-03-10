@@ -1,21 +1,12 @@
 #=================================================
 # Description: Build OpenWrt using GitHub Actions
-# Lisence: MIT
-# Author: P3TERX
-# Blog: https://p3terx.com
-# 自定义配置
 # CONFIG_PACKAGE_coremark is not set
 # CONFIG_DEFAULT_coremark is not set
-# CONFIG_PACKAGE_luci-app-zerotier is not set
-# CONFIG_PACKAGE_luci-app-v2ray-server is not set
 # git clone https://github.com/brvphoenix/wrtbwmon openwrt/package/wrtbwmon
 # git clone https://github.com/brvphoenix/luci-app-wrtbwmon openwrt/package/luci-app-wrtbwmon
-#         CONFIG_KERNEL_BUILD_USER="Tyri"
-#         CONFIG_GRUB_TIMEOUT="0"
- #        CONFIG_GRUB_TITLE="OpenWrt AutoBuild By Tyri"
 #=================================================
 
-name: 编译OpenWrt-X86
+name: OpenWrt-X86
 
 on: 
   #push:
@@ -42,7 +33,7 @@ jobs:
         sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
         sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*
         sudo -E apt-get update
-        sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler
+        sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib
         sudo -E apt-get -y autoremove --purge
         sudo -E apt-get clean
         
@@ -70,6 +61,8 @@ jobs:
         rm -rf openwrt/package/lean/luci-theme-argon
         git clone https://github.com/Leo-Jo/luci-app-koolproxyR openwrt/package/luci-app-koolproxyR
         git clone https://github.com/Mrbai98/luci-theme-atmaterial openwrt/package/luci-theme-atmaterial
+        git clone https://github.com/Leo-Jo-My/luci-theme-opentomcat.git openwrt/package/luci-theme-opentomcat
+        git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git openwrt/package/luci-theme-argon
         git clone https://github.com/tty228/luci-app-serverchan openwrt/package/luci-app-serverchan
         svn co https://github.com/jsda/packages2/trunk/ntlf9t/luci-app-advancedsetting openwrt/package/luci-app-advancedsetting
       #git clone https://github.com/pymumu/luci-app-smartdns openwrt/package/luci-app-smartdns
@@ -83,7 +76,7 @@ jobs:
       # cp -r openwrt/package/luci-theme-argon lede/package/lean/
       # cp -r /home/runner/work/lede/lede/openwrt/package/luci-app-wrtbwmon /home/runner/work/lede/lede/package/lean/
       # git clone https://github.com/vernesong/OpenClash openwrt/package/tmp
-      # git clone https://github.com/jerrykuku/luci-theme-argon openwrt/package/luci-theme-argon
+      
         
     #- name: SSH connection to Actions
       #uses: P3TERX/debugger-action@master
@@ -152,12 +145,16 @@ jobs:
         # LuCI插件选择:
         cat >> .config <<EOF
         CONFIG_PACKAGE_luci-app-adbyby-plus=y
-        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun=y
+        CONFIG_PACKAGE_luci-app-ssr-plus=y
         CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks=y
         CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Server=y
         CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Socks=y
         CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Trojan=y
         CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_v2ray-plugin=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_dns2socks=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_simple-obfs=y
+        CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_redsocks2=y
         CONFIG_PACKAGE_luci-app-unblockmusic=y
         CONFIG_PACKAGE_luci-app-mwan3helper=y
         CONFIG_PACKAGE_luci-app-flowoffload=y
@@ -175,7 +172,8 @@ jobs:
         # LuCI主题:
         cat >> .config <<EOF
         CONFIG_PACKAGE_luci-theme-atmaterial=y
-        CONFIG_PACKAGE_luci-theme-netgear=y 
+        CONFIG_PACKAGE_luci-theme-argon=y 
+        CONFIG_PACKAGE_luci-theme-opentomcat=y
         EOF
         
         # 常用软件包:
