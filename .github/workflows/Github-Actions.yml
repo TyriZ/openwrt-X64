@@ -2,8 +2,7 @@
 # Description: Build OpenWrt using GitHub Actions
 # CONFIG_PACKAGE_coremark is not set
 # CONFIG_DEFAULT_coremark is not set
-# git clone https://github.com/brvphoenix/wrtbwmon openwrt/package/wrtbwmon
-# git clone https://github.com/brvphoenix/luci-app-wrtbwmon openwrt/package/luci-app-wrtbwmon
+# - cron: 30 10 * * 2
 #=================================================
 
 name: OpenWrt-X86
@@ -13,7 +12,7 @@ on:
     #branches: 
       #- master
    schedule:
-     - cron: 30 10 * * 2
+     - cron: 0 20 * * *
    watch:
      types: [started]
 
@@ -160,7 +159,6 @@ jobs:
         CONFIG_PACKAGE_luci-app-flowoffload=y
         CONFIG_PACKAGE_luci-app-syncdial=y
         CONFIG_PACKAGE_luci-app-ttyd=y
-        CONFIG_PACKAGE_luci-app-wrtbwmon=y
         CONFIG_PACKAGE_luci-app-koolproxyR=y
         CONFIG_PACKAGE_luci-app-webadmin=y
         CONFIG_PACKAGE_luci-app-zerotier=y
