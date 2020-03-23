@@ -1,11 +1,16 @@
 #=================================================
 # Description: Build OpenWrt using GitHub Actions
-# CONFIG_PACKAGE_coremark is not set
-# CONFIG_DEFAULT_coremark is not set
-# - cron: 30 10 * * 2
+# Lisence: MIT
+# Author: P3TERX
+# Blog: https://p3terx.com
+# CONFIG_PACKAGE_luci-app-zerotier is not set
+# CONFIG_PACKAGE_luci-app-v2ray-server is not set
+# git clone https://github.com/brvphoenix/wrtbwmon openwrt/package/wrtbwmon
+# git clone https://github.com/brvphoenix/luci-app-wrtbwmon openwrt/package/luci-app-wrtbwmon
+# git clone https://github.com/Leo-Jo/luci-app-koolproxyR openwrt/package/luci-app-koolproxyR
 #=================================================
 
-name: OpenWrt-X86
+name: 编译OpenWrt-X86
 
 on: 
   #push:
@@ -13,8 +18,8 @@ on:
       #- master
    schedule:
      - cron: 0 20 * * *
-   watch:
-     types: [started]
+  #watch:
+     #types: [started]
 
 jobs:
   build:
