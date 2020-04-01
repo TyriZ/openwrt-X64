@@ -1,14 +1,3 @@
-#=================================================
-# Description: Build OpenWrt using GitHub Actions
-# Lisence: MIT
-# Author: P3TERX
-# Blog: https://p3terx.com
-# CONFIG_PACKAGE_luci-app-zerotier is not set
-# CONFIG_PACKAGE_luci-app-v2ray-server is not set
-# git clone https://github.com/brvphoenix/wrtbwmon openwrt/package/wrtbwmon
-# git clone https://github.com/brvphoenix/luci-app-wrtbwmon openwrt/package/luci-app-wrtbwmon
-# git clone https://github.com/Leo-Jo/luci-app-koolproxyR openwrt/package/luci-app-koolproxyR
-#=================================================
 
 name: 编译OpenWrt-X86
 
